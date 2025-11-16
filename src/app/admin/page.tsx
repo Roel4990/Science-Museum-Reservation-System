@@ -26,40 +26,46 @@ const fetchParticipants = async (params: { date: ReservationDate; booth: BoothNa
   return [];
 };
 
+const hasValidId = (p: Participant): p is Participant & { id: number } =>
+    p.id !== null && p.id >= 1 && p.id <= MAX_PARTICIPANTS;
+
 // --- Component ---
 const AdminPage: NextPage = () => {
-  const [selectedDate, setSelectedDate] = useState<ReservationDate | null>(null);
-  const [selectedBooth, setSelectedBooth] = useState<BoothName | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
-  const [reservations, setReservations] = useState<Record<string, Participant[]>>({});
-  const [isLoading, setIsLoading] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<ReservationDate | null>(null);
+    const [selectedBooth, setSelectedBooth] = useState<BoothName | null>(null);
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+    const [reservations, setReservations] = useState<Record<string, Participant[]>>({});
+    const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (selectedDate && selectedBooth && selectedTimeSlot) {
-      const key = `${selectedDate}-${selectedBooth}-${selectedTimeSlot}`;
-      
-      const loadParticipants = async () => {
-        setIsLoading(true);
-        const fetchedData = await fetchParticipants({
-            date: selectedDate,
-            booth: selectedBooth,
-            time: selectedTimeSlot
-        });
-        
-        const initialSlots: Participant[] = Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ id: null, name: '', contact: '' }));
+    useEffect(() => {
+        if (selectedDate && selectedBooth && selectedTimeSlot) {
+            const key = `${selectedDate}-${selectedBooth}-${selectedTimeSlot}`;
 
-        fetchedData.forEach(p => {
-          if (p.id >= 1 && p.id <= MAX_PARTICIPANTS) {
-            initialSlots[p.id - 1] = p;
-          }
-        });
-        console.log(initialSlots)
-        setReservations(prev => ({ ...prev, [key]: initialSlots }));
-        setIsLoading(false);
-      };
-      
-      loadParticipants();
-    }
+            const loadParticipants = async () => {
+                setIsLoading(true);
+                const fetchedData = await fetchParticipants({
+                    date: selectedDate,
+                    booth: selectedBooth,
+                    time: selectedTimeSlot
+                });
+
+                // 1. 12개의 빈 슬롯으로 구성된 초기 배열을 만듭니다.
+                const initialSlots: Participant[] = Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ id: null, name: '', contact: '' }));
+
+                // 2. 받아온 데이터를 id에 맞는 위치에 채워 넣습니다.
+                fetchedData.forEach(p => {
+                    if (hasValidId(p)) {
+                        initialSlots[p.id - 1] = p;
+                    }
+                });
+
+                setReservations(prev => ({ ...prev, [key]: initialSlots }));
+                setIsLoading(false);
+            };
+
+            // 캐시된 데이터가 없을 경우에만 API 호출
+            loadParticipants();
+        }
   }, [selectedDate, selectedBooth, selectedTimeSlot]);
 
   const reservationKey = useMemo(() => {
@@ -121,6 +127,7 @@ const AdminPage: NextPage = () => {
 
     if (window.confirm(`[${index+1}]번 ${participantToDelete.name}님의 예약을 삭제하시겠습니까?`)) {
         const newParticipants = [...participants];
+        // 해당 슬롯을 빈 객체로 교체하여 자리를 보존
         newParticipants[index] = { id: null, name: '', contact: '' };
         setReservations(prev => ({ ...prev, [reservationKey]: newParticipants }));
         alert("삭제되었습니다.");
