@@ -12,7 +12,6 @@ interface Booth {
 
 const DATES = ["2025-11-22", "2025-11-23"];
 
-// 날짜별 초기 부스 데이터
 const initialReservations: Record<string, Booth[]> = {
   "2025-11-22": [
     { id: 1, name: "에어로켓 만들기", slots: [12, 5, 0, 8, 3, 4] },
@@ -30,7 +29,7 @@ const initialReservations: Record<string, Booth[]> = {
   ],
 };
 
-const timeSlots = ["1회차 (10:00-10:45)", "2회차 (11:00-11:45)", "3회차 (13:00-13:45)", "4회차 (14:00-14:45)", "5회차 (15:00-15:45)", "6회차 (16:00-16:45)"];
+const timeSlots = ["1회차\n(10:00-10:45)", "2회차\n(11:00-11:45)", "3회차\n(13:00-13:45)", "4회차\n(14:00-14:45)", "5회차\n(15:00-15:45)", "6회차\n(16:00-16:45)"];
 
 // --- 컴포넌트 ---
 const Home: NextPage = () => {
@@ -38,38 +37,6 @@ const Home: NextPage = () => {
   const [reservations, setReservations] = useState(initialReservations);
 
   const currentBooths = reservations[selectedDate];
-
-  const handleReservation = (boothIndex: number, slotIndex: number) => {
-    const selectedBooth = currentBooths[boothIndex];
-    const selectedSlotSpots = selectedBooth.slots[slotIndex];
-
-    if (selectedSlotSpots === 0) {
-      alert("해당 시간대는 마감되었습니다.");
-      return;
-    }
-
-    const confirmation = window.confirm(
-      `'${selectedBooth.name}' 부스, ${timeSlots[slotIndex]}으로 예약하시겠습니까?`
-    );
-
-    if (confirmation) {
-      const newBoothsForDate = currentBooths.map((booth, bIndex) => {
-        if (bIndex === boothIndex) {
-          const newSlots = booth.slots.map((spots, sIndex) => 
-            sIndex === slotIndex ? spots - 1 : spots
-          );
-          return { ...booth, slots: newSlots };
-        }
-        return booth;
-      });
-
-      setReservations(prev => ({
-        ...prev,
-        [selectedDate]: newBoothsForDate,
-      }));
-      alert("예약이 완료되었습니다!");
-    }
-  };
 
   const handleRefresh = () => {
     if (window.confirm("현재 날짜의 예약 현황을 초기화하시겠습니까?")) {
@@ -123,10 +90,9 @@ const Home: NextPage = () => {
                   {booth.slots.map((spots, slotIndex) => (
                     <td
                       key={slotIndex}
-                      onClick={() => handleReservation(boothIndex, slotIndex)}
                       className={spots > 0 ? "available" : "full"}
                     >
-                      {spots > 0 ? `${spots}자리 남음` : "마감"}
+                      {spots > 0 ? `${spots}자리` : "마감"}
                     </td>
                   ))}
                 </tr>
@@ -137,7 +103,6 @@ const Home: NextPage = () => {
       </main>
       <style jsx>{`
         .container {
-          max-width: 1200px;
           margin: 0 auto;
           padding: 2rem;
           font-family: var(--font-geist-sans);
@@ -210,7 +175,6 @@ const Home: NextPage = () => {
           padding: 1rem 1.25rem;
           text-align: center;
           border-bottom: 1px solid #eaeaea;
-          white-space: nowrap;
         }
         th {
           background-color: #f9fafb;
@@ -218,6 +182,10 @@ const Home: NextPage = () => {
           font-size: 0.9rem;
           text-transform: uppercase;
           letter-spacing: 0.05em;
+          white-space: pre-line;
+        }
+        td {
+          white-space: nowrap;
         }
         tr:last-child td { border-bottom: none; }
         td:first-child, th:first-child {
@@ -228,15 +196,11 @@ const Home: NextPage = () => {
           background-color: #f0fff4;
           color: #2f855a;
           font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s ease-in-out;
         }
-        .available:hover { background-color: #c6f6d5; }
         .full {
           background-color: #fef2f2;
           color: #9b2c2c;
           font-weight: 500;
-          cursor: not-allowed;
         }
       `}</style>
     </div>
