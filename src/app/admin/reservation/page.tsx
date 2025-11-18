@@ -2,62 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { NextPage } from "next";
+import type { Reservation } from "@/app/type";
+import { DATES, MAX_PARTICIPANTS, TIMESLOTS } from "@/app/type";
+import { initialReservations } from "@/app/data";
 
-// --- 데이터 타입 및 초기 데이터 정의 ---
-interface Reservation {
-    id: number;
-    name: string;
-    phone: string;
-}
+const timeSlots = TIMESLOTS.map(t => t.replace(' (', '\n('));
 
-interface Booth {
-    id: number;
-    name: string;
-    slots: Reservation[][] ;
-}
-
-const DATES = ["2025-11-22", "2025-11-23"];
-const MAX_SPOTS_PER_SLOT = 12;
-
-const generateFakeReservations = (count: number): Reservation[] => {
-    if (count > MAX_SPOTS_PER_SLOT) count = MAX_SPOTS_PER_SLOT;
-    if (count === 0) return [];
-    const reservations: Reservation[] = [];
-    const firstNames = ["민준", "서준", "도윤", "예준", "시우", "하준", "지호", "주원", "서연", "서윤", "지우", "서현", "하윤", "민서", "지유"];
-    const lastNames = ["김", "이", "박", "최", "정"];
-
-    for (let i = 1; i <= count; i++) {
-        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-        reservations.push({
-            id: i,
-            name: `${lastName}${firstName}`,
-            phone: `010-${String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0')}-${String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0')}`,
-        });
-    }
-    return reservations;
-};
-
-const initialReservations: Record<string, Booth[]> = {
-    "2025-11-22": [
-        { id: 1, name: "에어로켓 만들기", slots: [generateFakeReservations(12), generateFakeReservations(5), [], generateFakeReservations(8), generateFakeReservations(3), generateFakeReservations(4)] },
-        { id: 2, name: "누리호 3D 입체모형 만들기", slots: [generateFakeReservations(10), [], generateFakeReservations(2), generateFakeReservations(1), generateFakeReservations(3), generateFakeReservations(2)] },
-        { id: 3, name: "지구와 달의 운동모형 만들기", slots: [generateFakeReservations(8), generateFakeReservations(8), generateFakeReservations(4), [], generateFakeReservations(2), generateFakeReservations(3)] },
-        { id: 4, name: "누리호 종이 로켓 만들기", slots: [generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(10), generateFakeReservations(5), generateFakeReservations(3), generateFakeReservations(4)] },
-        { id: 5, name: "발포정 누리호 로켓 만들기", slots: [[], generateFakeReservations(6), generateFakeReservations(6), generateFakeReservations(2), generateFakeReservations(5), generateFakeReservations(6)] },
-    ],
-    "2025-11-23": [
-        { id: 1, name: "에어로켓 만들기", slots: [generateFakeReservations(10), generateFakeReservations(10), generateFakeReservations(8), generateFakeReservations(8), generateFakeReservations(5), generateFakeReservations(5)] },
-        { id: 2, name: "누리호 3D 입체모형 만들기", slots: [generateFakeReservations(8), generateFakeReservations(8), generateFakeReservations(8), [], [], []] },
-        { id: 3, name: "지구와 달의 운동모형 만들기", slots: [generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(10), generateFakeReservations(5), generateFakeReservations(5), generateFakeReservations(2)] },
-        { id: 4, name: "누리호 종이 로켓 만들기", slots: [generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(12), generateFakeReservations(12)] },
-        { id: 5, name: "발포정 누리호 로켓 만들기", slots: [generateFakeReservations(10), generateFakeReservations(8), generateFakeReservations(6), generateFakeReservations(4), generateFakeReservations(2), []] },
-    ],
-};
-
-const timeSlots = ["1회차\n(10:00-10:45)", "2회차\n(11:00-11:45)", "3회차\n(13:00-13:45)", "4회차\n(14:00-14:45)", "5회차\n(15:00-15:45)", "6회차\n(16:00-16:45)"];
-
-// --- Page Component ---
 const Home: NextPage = () => {
     const [selectedDate, setSelectedDate] = useState<string>(DATES[0]);
     const [reservations, setReservations] = useState(initialReservations);
@@ -96,7 +46,6 @@ const Home: NextPage = () => {
     };
 
     return (
-        <div>
         <div className="container mx-auto p-4 sm:p-8 font-sans text-gray-800">
             <header className="text-center mb-10">
                 <h1 className="text-3xl sm:text-4xl font-bold mb-4">예약 현황</h1>
@@ -117,26 +66,26 @@ const Home: NextPage = () => {
                     </button>
                 </div>
                 <p className="w-full text-center text-gray-600 text-sm">
-                    각 칸은 예약된 인원 수를 의미하며, {MAX_SPOTS_PER_SLOT}명이면 마감으로 표기됩니다.
+                    각 칸은 예약된 인원 수를 의미하며, {MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
                 </p>
             </header>
             <main>
                 <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
                     <table className="w-full min-w-[800px]">
                         <thead className="bg-gray-100">
-                        <tr>
-                            <th className="p-4 font-medium text-gray-700 uppercase text-sm text-left">부스명</th>
-                            {timeSlots.map((time, index) => (
-                                <th key={index} className="p-4 font-medium text-gray-700 uppercase text-sm whitespace-pre-line">{time}</th>
-                            ))}
-                        </tr>
+                            <tr>
+                                <th className="p-4 font-medium text-gray-700 uppercase text-sm text-left">부스명</th>
+                                {timeSlots.map((time, index) => (
+                                    <th key={index} className="p-4 font-medium text-gray-700 uppercase text-sm whitespace-pre-line">{time}</th>
+                                ))}
+                            </tr>
                         </thead>
                         <tbody className="bg-white">
                         {currentBooths.map((booth) => (
                             <tr key={booth.id} className="border-b border-gray-200 last:border-b-0">
                                 <td className="p-4 font-medium text-gray-800">{booth.name}</td>
                                 {booth.slots.map((spots, slotIndex) => {
-                                    const isFull = spots.length >= MAX_SPOTS_PER_SLOT;
+                                    const isFull = spots.length >= MAX_PARTICIPANTS;
                                     const hasReservations = spots.length > 0;
                                     return (
                                         <td
@@ -155,14 +104,10 @@ const Home: NextPage = () => {
                 </div>
             </main>
 
-
-
-
-        </div>
             <dialog
                 ref={dialogRef}
                 onClose={closeModal}
-                className="m-auto bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 relative backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+                className="m-auto bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 relative backdrop:bg-black:backdrop-blur-sm"
             >
                 {modalData && (
                     <>
@@ -209,7 +154,7 @@ const Home: NextPage = () => {
                     </>
                 )}
             </dialog>
-    </div>
+        </div>
     );
 };
 

@@ -2,36 +2,12 @@
 
 import { useState } from "react";
 import type { NextPage } from "next";
+import {TIMESLOTS} from "@/app/type";
+import { DATES, MAX_PARTICIPANTS } from '@/app/type'
+import { initialReservations } from "@/app/data";
 
-// --- 데이터 타입 및 초기 데이터 정의 ---
-interface Booth {
-  id: number;
-  name: string;
-  slots: number[];
-}
+const timeSlots = TIMESLOTS.map(t => t.replace(' (', '\n('));
 
-const DATES = ["2025-11-22", "2025-11-23"];
-
-const initialReservations: Record<string, Booth[]> = {
-  "2025-11-22": [
-    { id: 1, name: "에어로켓 만들기", slots: [12, 5, 0, 8, 3, 4] },
-    { id: 2, name: "누리호 3D 입체모형 만들기", slots: [10, 0, 2, 1, 3, 2] },
-    { id: 3, name: "지구와 달의 운동모형 만들기", slots: [8, 8, 4, 0, 2, 3] },
-    { id: 4, name: "누리호 종이 로켓 만들기", slots: [15, 12, 10, 5, 3, 4] },
-    { id: 5, name: "발포정 누리호 로켓 만들기", slots: [0, 6, 6, 2, 5, 6] },
-  ],
-  "2025-11-23": [
-    { id: 1, name: "에어로켓 만들기", slots: [10, 10, 8, 8, 5, 5] },
-    { id: 2, name: "누리호 3D 입체모형 만들기", slots: [8, 8, 8, 0, 0, 0] },
-    { id: 3, name: "지구와 달의 운동모형 만들기", slots: [12, 12, 10, 5, 5, 2] },
-    { id: 4, name: "누리호 종이 로켓 만들기", slots: [15, 15, 15, 15, 15, 15] },
-    { id: 5, name: "발포정 누리호 로켓 만들기", slots: [10, 8, 6, 4, 2, 0] },
-  ],
-};
-
-const timeSlots = ["1회차\n(10:00-10:45)", "2회차\n(11:00-11:45)", "3회차\n(13:00-13:45)", "4회차\n(14:00-14:45)", "5회차\n(15:00-15:45)", "6회차\n(16:00-16:45)"];
-
-// --- 컴포넌트 ---
 const Home: NextPage = () => {
   const [selectedDate, setSelectedDate] = useState<string>(DATES[0]);
   const [reservations, setReservations] = useState(initialReservations);
@@ -49,160 +25,62 @@ const Home: NextPage = () => {
   };
 
   return (
-    <div className="container">
-      <header>
-        <h1>예약현황</h1>
-        <div className="controls-container">
-          <div className="date-selectors">
-            {DATES.map(date => (
-              <button
-                key={date}
-                onClick={() => setSelectedDate(date)}
-                className={`date-selector ${selectedDate === date ? 'selected' : ''}`}
-              >
-                {date}
+  <div className="container mx-auto p-4 sm:p-8 font-sans text-gray-800">
+      <header className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">예약 현황</h1>
+          <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
+              <div className="flex items-center border border-gray-300 rounded-lg p-1 bg-gray-50">
+                  {DATES.map(date => (
+                      <button
+                          key={date}
+                          onClick={() => setSelectedDate(date)}
+                          className={`px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md transition-colors duration-200 ${selectedDate === date ? 'bg-gray-800 text-white shadow' : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                          {date}
+                      </button>
+                  ))}
+              </div>
+              <button onClick={handleRefresh} className="px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                  새로고침
               </button>
-            ))}
           </div>
-          <button onClick={handleRefresh} className="refresh-button">
-            새로고침
-          </button>
-          <p className="table-description">
-            각 칸은 남은 인원 수를 의미하며, 0명이면 마감으로 표기됩니다.
+          <p className="w-full text-center text-gray-600 text-sm">
+              각 칸은 예약된 인원 수를 의미하며, {MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
           </p>
-        </div>
       </header>
       <main>
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>부스명</th>
-                {timeSlots.map((time, index) => (
-                  <th key={index}>{time}</th>
-                ))}
-              </tr>
+        <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
+            <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-100">
+                <tr>
+                    <th className="p-4 font-medium text-gray-700 uppercase text-sm text-left">부스명</th>
+                    {timeSlots.map((time, index) => (
+                        <th key={index} className="p-4 font-medium text-gray-700 uppercase text-sm whitespace-pre-line">{time}</th>
+                    ))}
+                </tr>
             </thead>
-            <tbody>
-              {currentBooths.map((booth, boothIndex) => (
-                <tr key={booth.id}>
-                  <td>{booth.name}</td>
-                  {booth.slots.map((spots, slotIndex) => (
-                    <td
-                      key={slotIndex}
-                      className={spots > 0 ? "available" : "full"}
-                    >
-                      {spots > 0 ? `${spots}자리` : "마감"}
-                    </td>
-                  ))}
+            <tbody className="bg-white">
+              {currentBooths.map((booth) => (
+                <tr key={booth.id} className="border-b border-gray-200 last:border-b-0">
+                  <td className="p-4 font-medium text-gray-800">{booth.name}</td>
+                    {booth.slots.map((spots, slotIndex) => {
+                        const isFull = spots.length >= MAX_PARTICIPANTS;
+                        const hasReservations = spots.length > 0;
+                        return (
+                        <td
+                          key={slotIndex}
+                          className={`p-4 text-center font-semibold ${isFull ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"} ${hasReservations ? "cursor-pointer hover:bg-gray-200 transition-colors duration-200" : ""}`}
+                        >
+                          {spots.length < MAX_PARTICIPANTS ? `${MAX_PARTICIPANTS - spots.length}자리` : "마감"}
+                        </td>
+                        );
+                    })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </main>
-      <style jsx>{`
-        .container {
-          margin: 0 auto;
-          padding: 2rem;
-          font-family: var(--font-geist-sans);
-          color: #333;
-        }
-        header {
-          text-align: center;
-          margin-bottom: 2.5rem;
-        }
-        h1 {
-          font-size: 2.5rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-        }
-        .controls-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 1rem;
-          margin-top: 1rem;
-          flex-wrap: wrap;
-        }
-        .date-selectors {
-          display: flex;
-          gap: 0.5rem;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          padding: 4px;
-        }
-        .date-selector {
-          padding: 0.5rem 1rem;
-          border: none;
-          background-color: transparent;
-          cursor: pointer;
-          border-radius: 6px;
-          font-size: 1rem;
-          transition: all 0.2s ease;
-        }
-        .date-selector.selected {
-          background-color: #495057;
-          color: white;
-        }
-        .refresh-button {
-          padding: 0.6rem 1.2rem;
-          border: 1px solid #ddd;
-          background-color: #f8f8f8;
-          color: #555;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 0.9rem;
-        }
-        .refresh-button:hover {
-          background-color: #eee;
-        }
-        .table-description {
-          flex-basis: 100%;
-          font-size: 0.9rem;
-          color: #777;
-          margin-top: 0.5rem;
-        }
-        .table-container { overflow-x: auto; }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        th, td {
-          padding: 1rem 1.25rem;
-          text-align: center;
-          border-bottom: 1px solid #eaeaea;
-        }
-        th {
-          background-color: #f9fafb;
-          font-weight: 500;
-          font-size: 0.9rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          white-space: pre-line;
-        }
-        td {
-          white-space: nowrap;
-        }
-        tr:last-child td { border-bottom: none; }
-        td:first-child, th:first-child {
-          text-align: left;
-          font-weight: 500;
-        }
-        .available {
-          background-color: #f0fff4;
-          color: #2f855a;
-          font-weight: 500;
-        }
-        .full {
-          background-color: #fef2f2;
-          color: #9b2c2c;
-          font-weight: 500;
-        }
-      `}</style>
     </div>
   );
 };

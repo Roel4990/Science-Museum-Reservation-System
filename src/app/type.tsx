@@ -26,6 +26,18 @@ export interface Participant {
 
 export type FetchedParticipant = Required<Participant>;
 
+export interface Reservation {
+  id: number;
+  name: string;
+  phone: string;
+}
+
+export interface Booth {
+  id: number;
+  name: BoothName;
+  slots: Reservation[][];
+}
+
 
 // 2. 상수 정의
 export const DATES: ReservationDate[] = ["2025-11-22", "2025-11-23"];
