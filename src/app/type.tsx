@@ -1,6 +1,3 @@
-// src/app/type.tsx
-
-// 1. 타입 정의
 export type ReservationDate = "2025-11-22" | "2025-11-23";
 
 export type BoothName = 
@@ -38,8 +35,6 @@ export interface Booth {
   slots: Reservation[][];
 }
 
-
-// 2. 상수 정의
 export const DATES: ReservationDate[] = ["2025-11-22", "2025-11-23"];
 
 export const BOOTHS: BoothName[] = [
