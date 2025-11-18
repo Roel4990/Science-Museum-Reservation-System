@@ -1,0 +1,39 @@
+.admin-container { padding: 2rem; font-family: var(--font-geist-sans); }
+header { text-align: center; margin-bottom: 2rem; }
+h1 { font-size: 2.2rem; font-weight: 600; }
+h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+.content-wrapper { display: flex; gap: 2rem; }
+.filters { display: flex; gap: 1.5rem; flex-grow: 1; }
+.filter-column { flex: 1; }
+.item { padding: 0.8rem 1rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s ease; }
+.item:hover { background-color: #f0f0f0; }
+.item.selected { background-color: #495057; color: white; border-color: #495057; font-weight: 500; }
+.item.disabled { cursor: not-allowed; background-color: #f8f9fa; color: #aaa; }
+.participants-section { flex: 1; padding-left: 2rem; border-left: 1px solid #eee; }
+.selection-info { font-size: 0.9rem; color: #555; margin-bottom: 1.5rem; }
+.participant-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.participant-row { display: flex; align-items: center; gap: 0.5rem; }
+.participant-number { font-size: 0.9rem; width: 2.5rem; flex-shrink: 0; text-align: right; padding-right: 0.5rem; }
+input[type="text"] { flex-grow: 1; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; }
+input:disabled { background-color: #f1f1f1; color: #777; cursor: not-allowed; }
+button { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background-color 0.2s; }
+.save-button { background-color: #28a745; color: white; }
+.save-button:hover { background-color: #218838; }
+.delete-button { background-color: #dc3545; color: white; }
+.delete-button:hover { background-color: #c82333; }
+.placeholder { display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f8f9fa; border-radius: 8px; text-align: center; color: #666; }
+
+@media (max-width: 768px) {
+  .admin-container { padding: 1rem; }
+  .content-wrapper { flex-direction: column; gap: 0; }
+  .filters { flex-direction: column; }
+  .participants-section { padding-left: 0; border-left: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee; }
+  .filter-column { min-width: 100%; }
+  .participant-row { flex-wrap: wrap; row-gap: 0.5rem; }
+  .input-name { flex-grow: 1; }
+  .input-contact { flex-basis: 100%; }
+  .participant-row button { margin-left: auto; }
+}
+@media (min-width: 769px) {
+  .item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
