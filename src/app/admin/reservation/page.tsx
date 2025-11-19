@@ -63,7 +63,6 @@ const Home: NextPage = () => {
     };
 
     const handleSlotClick = (date: string, boothType: string, roundNo: number, boothName: string, time: string) => {
-        console.log(date, boothType, roundNo, boothName, time)
         setDetailParams({ date, boothType, roundNo, boothName, time });
     };
 
@@ -155,9 +154,7 @@ const Home: NextPage = () => {
                                             key={round.roundNo}
                                             className={`p-4 text-center font-semibold ${isFull ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"} ${hasReservations ? "cursor-pointer hover:bg-gray-200 transition-colors duration-200" : ""}`}
                                             onClick={() => {
-                                                // if (hasReservations) {
-                                                    handleSlotClick(selectedDate, booth.boothType, round.roundNo, booth.boothName, timeSlots[round.roundNo - 1]);
-                                                // }
+                                                handleSlotClick(selectedDate, booth.boothType, round.roundNo, booth.boothName, timeSlots[round.roundNo - 1]);
                                             }}
                                         >
                                             {round.count}명

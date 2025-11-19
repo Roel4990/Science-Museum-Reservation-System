@@ -51,7 +51,6 @@ const AdminPage: NextPage = () => {
         [selectedDate, selectedBooth, selectedTimeSlot]
     );
 
-    // useQuery to fetch and cache reservation data
     const { data: serverData, isLoading: isParticipantsLoading } = useQuery({
         queryKey: reservationQueryKey,
         queryFn: async () => {
@@ -235,28 +234,28 @@ const AdminPage: NextPage = () => {
                 <div className="participants-section">
                     {showParticipants ? (
                         isParticipantsLoading ? <div className="placeholder"><p>참가자 명단을 불러오는 중입니다...</p></div> :
-                        <>
-                          <h2>참가자 명단</h2>
-                          <p className="selection-info">{selectedDate} / {selectedBooth} / {selectedTimeSlot}</p>
-                          <div className="participant-list">
-                            {participants.map((p, index) => (
-                              <div key={index} className="participant-row">
-                                <span className="participant-number">{index + 1}.</span>
-                                <input type="text" placeholder="이름" className="input-name" value={p.name} onChange={(e) => handleParticipantChange(index, 'name', e.target.value)} disabled={!!p.reservationId} />
-                                <input type="text" placeholder="연락처" className="input-contact" value={p.phone} onChange={(e) => handleParticipantChange(index, 'phone', e.target.value)} disabled={!!p.reservationId} />
-                                {p.reservationId ? (
-                                    <button onClick={() => handleDelete(index)} className="delete-button" disabled={deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId}>
-                                        {deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId ? '삭제중...' : '지우기'}
-                                    </button>
-                                ) : (
-                                    <button onClick={() => handleSave(index)} className="save-button" disabled={createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1)}>
-                                        {createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1) ? '저장중...' : '저장'}
-                                    </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </>
+                        <div>
+                            <h2>참가자 명단</h2>
+                            <p className="selection-info">{selectedDate} / {selectedBooth} / {selectedTimeSlot}</p>
+                            <div className="participant-list">
+                                {participants.map((p, index) => (
+                                    <div key={index} className="participant-row">
+                                        <span className="participant-number">{index + 1}.</span>
+                                        <input type="text" placeholder="이름" className="input-name" value={p.name} onChange={(e) => handleParticipantChange(index, 'name', e.target.value)} disabled={!!p.reservationId} />
+                                        <input type="text" placeholder="연락처" className="input-contact" value={p.phone} onChange={(e) => handleParticipantChange(index, 'phone', e.target.value)} disabled={!!p.reservationId} />
+                                        {p.reservationId ? (
+                                            <button onClick={() => handleDelete(index)} className="delete-button" disabled={deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId}>
+                                                {deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId ? '삭제중...' : '지우기'}
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleSave(index)} className="save-button" disabled={createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1)}>
+                                                {createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1) ? '저장중...' : '저장'}
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     ) : (
                         <div className="placeholder"><p>날짜, 부스, 회차를 모두 선택하면 참가자 명단을 관리할 수 있습니다.</p></div>
                     )}
