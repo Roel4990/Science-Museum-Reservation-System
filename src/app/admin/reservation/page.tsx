@@ -41,9 +41,10 @@ const Home: NextPage = () => {
     const [detailParams, setDetailParams] = useState<{ date: string; boothType: string; roundNo: number; boothName: string; time: string; } | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
 
-    const { data: reservations, isError, isFetching, refetch } = useQuery({
+    const { data: reservations, isError, isLoading, isFetching, refetch } = useQuery({
         queryKey: ['reservations'],
         queryFn: fetchReservations,
+        refetchInterval: 3000
     });
 
     const {
@@ -90,7 +91,7 @@ const Home: NextPage = () => {
         }
     }, [modalData]);
 
-    if (isFetching) {
+    if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <p className="text-xl">예약 현황을 불러오는 중입니다...</p>
@@ -119,7 +120,7 @@ const Home: NextPage = () => {
                         className="px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50"
                         disabled={isFetching}
                     >
-                        {isFetching ? '새로고침 중...' : '새로고침'}
+                        새로고침
                     </button>
                 </div>
                 {isError && (
