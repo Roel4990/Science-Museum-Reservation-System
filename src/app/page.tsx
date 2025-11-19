@@ -72,7 +72,7 @@ const Home: NextPage = () => {
                     </p>
                 )}
                 <p className="w-full text-center text-gray-600 text-sm">
-                    각 칸은 예약된 인원 수를 의미하며, {MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
+                    각 칸은 남은 인원 수를 의미하며, {12 - MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
                 </p>
             </header>
             <main>
