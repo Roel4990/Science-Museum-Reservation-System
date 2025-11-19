@@ -16,29 +16,70 @@ export type TimeSlot =
   | "6회차 (16:00-16:45)";
 
 export interface Participant {
-  id: number | null;
-  name: string;
-  contact: string;
+    slotNo: number;
+    reservationId: number;
+    name: string;
+    phone: string;
 }
 
 export type FetchedParticipant = Required<Participant>;
 
-export interface Reservation {
-  id: number;
+export interface Slot {
+  slotNo: number | null;
+  reservationId: number | null;
   name: string;
   phone: string;
 }
 
+export interface ReservationDetailResponse {
+  date: string;
+  boothType: string;
+  roundNo: number;
+  slots: Slot[];
+}
+
+export interface CreateReservationPayload {
+  date: string;
+  boothType: string;
+  round: number;
+  slotNo: number;
+  name: string;
+  phone: string;
+}
+
+export interface CreateReservationResult {
+  reservationId: number;
+}
+
 export interface Booth {
-  id: number;
-  name: BoothName;
-  slots: Reservation[][];
+    boothType: BoothType;
+    boothName: BoothName;
+    rounds: round[];
+}
+
+export interface round {
+    roundNo: number;
+    count: number;
+}
+
+export enum BoothType {
+    AIR_ROCKET = "AIR_ROCKET",
+    NURIHO_3D = "NURIHO_3D",
+    EARTH_MOON_MODEL = "EARTH_MOON_MODEL",
+    NURIHO_PAPER_ROCKET = "NURIHO_PAPER_ROCKET",
+    NURIHO_TABLET_ROCKET = "NURIHO_TABLET_ROCKET"
+}
+
+export interface reservationsResponse {
+    dateMap: {
+        [date: string]: Booth[];
+    };
 }
 
 export const DATES: ReservationDate[] = ["2025-11-22", "2025-11-23"];
 
 export const BOOTHS: BoothName[] = [
-  "에어로켓 만들기", 
+  "에어로켓 만들기",
   "누리호 3D 입체모형 만들기", 
   "지구와 달의 운동모형 만들기", 
   "누리호 종이 로켓 만들기", 

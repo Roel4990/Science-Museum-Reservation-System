@@ -2,19 +2,85 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { NextPage } from "next";
-import type { Reservation } from "@/app/type";
+import { useQuery } from "@tanstack/react-query";
+import {reservationsResponse, Slot} from "@/app/type";
 import { DATES, MAX_PARTICIPANTS, TIMESLOTS } from "@/app/type";
-import { initialReservations } from "@/app/data";
+import {getReservations} from "@/lib/api/reservations";
+import {getReservationDetail} from "@/lib/api/reservationDetail";
+import {ApiResult} from "@/lib/api/types";
 
 const timeSlots = TIMESLOTS.map(t => t.replace(' (', '\n('));
 
+async function fetchReservations() {
+    try {
+        const res: ApiResult<reservationsResponse> = await getReservations();
+        if (!res.success || !res.data) throw new Error(res.error || 'fail');
+        return res.data;
+    } catch {
+        return null;
+    }
+}
+
+async function fetchReservationDetail(
+    date: string,
+    boothType: string,
+    roundNo: number
+) {
+    try {
+        const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
+        if (!res.success || !res.data) throw new Error(res.error || 'fail');
+        return res.data;
+    } catch {
+        return null;
+    }
+}
+
 const Home: NextPage = () => {
     const [selectedDate, setSelectedDate] = useState<string>(DATES[0]);
-    const [reservations, setReservations] = useState(initialReservations);
-    const [modalData, setModalData] = useState<{ boothName: string; time: string; reservations: Reservation[] } | null>(null);
+    const [modalData, setModalData] = useState<{ boothName: string; time: string; slots: Slot[] } | null>(null);
+    const [detailParams, setDetailParams] = useState<{ date: string; boothType: string; roundNo: number; boothName: string; time: string; } | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
 
-    const currentBooths = reservations[selectedDate];
+    const { data: reservations, isError, isFetching, refetch } = useQuery({
+        queryKey: ['reservations'],
+        queryFn: fetchReservations,
+    });
+
+    const {
+        data: reservationDetail,
+        isFetching: isFetchingReservationDetail,
+        isError: isErrorReservationDetail,
+    } = useQuery({
+        queryKey: ['reservationDetail', detailParams],
+        queryFn: () => fetchReservationDetail(detailParams!.date, detailParams!.boothType, detailParams!.roundNo),
+        enabled: !!detailParams,
+    });
+
+    const currentBooths = reservations?.dateMap[selectedDate] || [];
+
+    const handleRefresh = () => {
+        refetch();
+    };
+
+    const handleSlotClick = (date: string, boothType: string, roundNo: number, boothName: string, time: string) => {
+        console.log(date, boothType, roundNo, boothName, time)
+        setDetailParams({ date, boothType, roundNo, boothName, time });
+    };
+
+    const closeModal = () => {
+        setModalData(null);
+        setDetailParams(null);
+    };
+
+    useEffect(() => {
+        if (detailParams && reservationDetail) {
+            setModalData({
+                boothName: detailParams.boothName,
+                time: detailParams.time,
+                slots: reservationDetail,
+            });
+        }
+    }, [reservationDetail, detailParams]);
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -25,25 +91,13 @@ const Home: NextPage = () => {
         }
     }, [modalData]);
 
-    const handleRefresh = () => {
-        if (window.confirm("현재 날짜의 예약 현황을 초기화하시겠습니까?")) {
-            setReservations(prev => ({
-                ...prev,
-                [selectedDate]: initialReservations[selectedDate],
-            }));
-            alert("예약 현황이 초기화되었습니다.");
-        }
-    };
-
-    const handleSlotClick = (boothName: string, time: string, reservations: Reservation[]) => {
-        if (reservations.length > 0) {
-            setModalData({ boothName, time, reservations });
-        }
-    };
-
-    const closeModal = () => {
-        setModalData(null);
-    };
+    if (isFetching) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <p className="text-xl">예약 현황을 불러오는 중입니다...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto p-4 sm:p-8 font-sans text-gray-800">
@@ -61,10 +115,19 @@ const Home: NextPage = () => {
                             </button>
                         ))}
                     </div>
-                    <button onClick={handleRefresh} className="px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                        새로고침
+                    <button
+                        onClick={handleRefresh}
+                        className="px-4 py-2 text-sm sm:text-base bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50"
+                        disabled={isFetching}
+                    >
+                        {isFetching ? '새로고침 중...' : '새로고침'}
                     </button>
                 </div>
+                {isError && (
+                    <p className="w-full text-center text-red-500 bg-red-50 py-2 rounded-lg mb-4">
+                        서버 데이터를 불러오는 데 실패했습니다. 현재 표시되는 데이터는 실제와 다를 수 있습니다.
+                    </p>
+                )}
                 <p className="w-full text-center text-gray-600 text-sm">
                     각 칸은 예약된 인원 수를 의미하며, {MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
                 </p>
@@ -82,18 +145,22 @@ const Home: NextPage = () => {
                         </thead>
                         <tbody className="bg-white">
                         {currentBooths.map((booth) => (
-                            <tr key={booth.id} className="border-b border-gray-200 last:border-b-0">
-                                <td className="p-4 font-medium text-gray-800">{booth.name}</td>
-                                {booth.slots.map((spots, slotIndex) => {
-                                    const isFull = spots.length >= MAX_PARTICIPANTS;
-                                    const hasReservations = spots.length > 0;
+                            <tr key={booth.boothType} className="border-b border-gray-200 last:border-b-0">
+                                <td className="p-4 font-medium text-gray-800">{booth.boothName}</td>
+                                {booth.rounds.map((round) => {
+                                    const isFull = round.count >= MAX_PARTICIPANTS;
+                                    const hasReservations = round.count > 0;
                                     return (
                                         <td
-                                            key={slotIndex}
+                                            key={round.roundNo}
                                             className={`p-4 text-center font-semibold ${isFull ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"} ${hasReservations ? "cursor-pointer hover:bg-gray-200 transition-colors duration-200" : ""}`}
-                                            onClick={() => handleSlotClick(booth.name, timeSlots[slotIndex], spots)}
+                                            onClick={() => {
+                                                // if (hasReservations) {
+                                                    handleSlotClick(selectedDate, booth.boothType, round.roundNo, booth.boothName, timeSlots[round.roundNo - 1]);
+                                                // }
+                                            }}
                                         >
-                                            {spots.length}명
+                                            {round.count}명
                                         </td>
                                     );
                                 })}
@@ -109,7 +176,9 @@ const Home: NextPage = () => {
                 onClose={closeModal}
                 className="m-auto bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 relative backdrop:bg-black:backdrop-blur-sm"
             >
-                {modalData && (
+                {isFetchingReservationDetail && <p>예약자 명단을 불러오는 중입니다...</p>}
+                {isErrorReservationDetail && <p className="text-red-500">예약자 명단을 불러오는 데 실패했습니다.</p>}
+                {modalData && !isFetchingReservationDetail && !isErrorReservationDetail && (
                     <>
                         <button
                             onClick={closeModal}
@@ -126,30 +195,34 @@ const Home: NextPage = () => {
                         </h3>
 
                         <div className="max-h-[60vh] overflow-y-auto border-t border-gray-200">
-                            <table className="w-full">
-                                <thead className="sticky top-0 bg-gray-100">
-                                <tr>
-                                    <th className="p-3 text-sm font-medium text-gray-600 text-center w-16">
-                                        No.
-                                    </th>
-                                    <th className="p-3 text-sm font-medium text-gray-600 text-left">
-                                        이름
-                                    </th>
-                                    <th className="p-3 text-sm font-medium text-gray-600 text-left">
-                                        연락처
-                                    </th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {modalData.reservations.map((res, index) => (
-                                    <tr key={res.id} className="border-b border-gray-100 last:border-0">
-                                        <td className="p-3 text-center text-gray-600">{index + 1}</td>
-                                        <td className="p-3 text-gray-800">{res.name}</td>
-                                        <td className="p-3 text-gray-800">{res.phone}</td>
+                            {modalData.slots.length > 0 ? (
+                                <table className="w-full">
+                                    <thead className="sticky top-0 bg-gray-100">
+                                    <tr>
+                                        <th className="p-3 text-sm font-medium text-gray-600 text-center w-16">
+                                            No.
+                                        </th>
+                                        <th className="p-3 text-sm font-medium text-gray-600 text-left">
+                                            이름
+                                        </th>
+                                        <th className="p-3 text-sm font-medium text-gray-600 text-left">
+                                            연락처
+                                        </th>
                                     </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {modalData.slots.map((res, index) => (
+                                        <tr key={res.slotNo} className="border-b border-gray-100 last:border-0">
+                                            <td className="p-3 text-center text-gray-600">{index + 1}</td>
+                                            <td className="p-3 text-gray-800">{res.name}</td>
+                                            <td className="p-3 text-gray-800">{res.phone}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p className="text-center py-8 text-gray-500">예약자가 없습니다.</p>
+                            )}
                         </div>
                     </>
                 )}
