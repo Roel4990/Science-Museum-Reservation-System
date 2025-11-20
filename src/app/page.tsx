@@ -45,7 +45,7 @@ const Home: NextPage = () => {
     return (
         <div className="container mx-auto p-4 sm:p-8 font-sans text-gray-800">
             <header className="text-center mb-10">
-                <h1 className="inline-block text-4xl sm:text-4xl font-bold text-white px-7 py-4 rounded-lg mb-4" style={{ backgroundColor: '#CD3332' }}>누리호 4차 발사 성공 기원 행사 체험부스 예약현황</h1>
+                <h1 className="inline-block text-4xl sm:text-4xl font-bold text-white px-7 py-4 rounded-lg mb-15" style={{ backgroundColor: '#CD3332' }}>누리호 4차 발사 성공 기원 행사 체험부스 예약현황</h1>
                 <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
                     <div className="flex items-center border border-gray-300 rounded-lg p-1 bg-gray-50">
                         {DATES.map(date => (
