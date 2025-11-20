@@ -245,11 +245,11 @@ const AdminPage: NextPage = () => {
                                         <input type="text" placeholder="연락처" className="input-contact" value={p.phone} onChange={(e) => handleParticipantChange(index, 'phone', e.target.value)} disabled={!!p.reservationId} />
                                         {p.reservationId ? (
                                             <button onClick={() => handleDelete(index)} className="delete-button" disabled={deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId}>
-                                                {deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId ? '삭제중...' : '지우기'}
+                                                {deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId ? '삭제' : '삭제'}
                                             </button>
                                         ) : (
                                             <button onClick={() => handleSave(index)} className="save-button" disabled={createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1)}>
-                                                {createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1) ? '저장중...' : '저장'}
+                                                {createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1) ? '저장' : '저장'}
                                             </button>
                                         )}
                                     </div>
