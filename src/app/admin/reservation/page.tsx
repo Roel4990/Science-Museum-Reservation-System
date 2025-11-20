@@ -50,11 +50,13 @@ const Home: NextPage = () => {
     const {
         data: reservationDetail,
         isFetching: isFetchingReservationDetail,
+        isLoading: isLoadingReservationDetail,
         isError: isErrorReservationDetail,
     } = useQuery({
         queryKey: ['reservationDetail', detailParams],
         queryFn: () => fetchReservationDetail(detailParams!.date, detailParams!.boothType, detailParams!.roundNo),
         enabled: !!detailParams,
+        refetchInterval: 3000
     });
 
     const currentBooths = reservations?.dateMap[selectedDate] || [];
@@ -174,9 +176,9 @@ const Home: NextPage = () => {
                 onClose={closeModal}
                 className="m-auto bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 relative backdrop:bg-black:backdrop-blur-sm"
             >
-                {isFetchingReservationDetail && <p>예약자 명단을 불러오는 중입니다...</p>}
+                {isLoadingReservationDetail && <p>예약자 명단을 불러오는 중입니다...</p>}
                 {isErrorReservationDetail && <p className="text-red-500">예약자 명단을 불러오는 데 실패했습니다.</p>}
-                {modalData && !isFetchingReservationDetail && !isErrorReservationDetail && (
+                {modalData && !isLoadingReservationDetail && !isErrorReservationDetail && (
                     <>
                         <button
                             onClick={closeModal}
