@@ -21,13 +21,11 @@ async function fetchReservationDetail(
     boothType: string,
     roundNo: number
 ) {
-    try {
-        const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
-        if (!res.success || !res.data) throw new Error(res.error || 'fail');
-        return res.data;
-    } catch {
-        return null;
+    const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to fetch reservation details.');
     }
+    return res.data;
 }
 
 const boothNameToType: Record<BoothName, BoothType> = {

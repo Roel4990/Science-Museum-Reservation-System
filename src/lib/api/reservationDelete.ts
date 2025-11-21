@@ -1,6 +1,6 @@
 import {ApiResult, fail, ok} from "@/lib/api/types";
 
-export const deleteReservation = async (reservationId: number): Promise<ApiResult<any>> => {
+export const deleteReservation = async (reservationId: number): Promise<ApiResult<void>> => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
         if (!apiUrl) {
@@ -15,12 +15,11 @@ export const deleteReservation = async (reservationId: number): Promise<ApiResul
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Failed to create reservation' }));
+            const errorData = await response.json().catch(() => ({ message: 'Failed to delete reservation' }));
             return fail(errorData.message || 'Unknown error occurred');
         }
 
-        const data = await response.json();
-        return ok(data);
+        return ok(undefined);
     } catch (error) {
         if (error instanceof Error) {
             return fail(error.message);
