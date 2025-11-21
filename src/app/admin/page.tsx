@@ -3,11 +3,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { NextPage } from 'next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DATES, BOOTHS, TIMESLOTS, MAX_PARTICIPANTS } from '@/constants/reservation';
 import {
-    DATES, BOOTHS, TIMESLOTS, MAX_PARTICIPANTS, BoothType,
+    BoothType,
     type ReservationDate, type BoothName, type TimeSlot,
-    type Participant, type CreateReservationPayload, Slot
-} from '../type';
+    type Participant, type CreateReservationPayload, type Slot
+} from '@/types/reservation';
 import './admin.css';
 import { ApiResult } from "@/lib/api/types";
 import { getReservationDetail } from "@/lib/api/reservationDetail";
@@ -20,13 +21,11 @@ async function fetchReservationDetail(
     boothType: string,
     roundNo: number
 ) {
-    try {
-        const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
-        if (!res.success || !res.data) throw new Error(res.error || 'fail');
-        return res.data;
-    } catch {
-        return null;
+    const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to fetch reservation details.');
     }
+    return res.data;
 }
 
 const boothNameToType: Record<BoothName, BoothType> = {
@@ -44,12 +43,16 @@ const AdminPage: NextPage = () => {
     const [selectedBooth, setSelectedBooth] = useState<BoothName | null>(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
 
-    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [localChanges, setLocalChanges] = useState<Record<number, { name: string; phone: string }>>({});
 
     const reservationQueryKey = useMemo(() =>
         ['reservations', selectedDate, selectedBooth, selectedTimeSlot],
         [selectedDate, selectedBooth, selectedTimeSlot]
     );
+
+    useEffect(() => {
+        setLocalChanges({});
+    }, [reservationQueryKey]);
 
     const { data: serverData, isLoading: isParticipantsLoading } = useQuery({
         queryKey: reservationQueryKey,
@@ -82,9 +85,18 @@ const AdminPage: NextPage = () => {
         enabled: !!(selectedDate && selectedBooth && selectedTimeSlot),
     });
 
-    useEffect(() => {
-        setParticipants(serverData || []);
-    }, [serverData]);
+    const participants = useMemo(() => {
+        const baseData = serverData || Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
+        return baseData.map((p, index) => {
+            const changes = localChanges[index];
+            if (changes) {
+                return { ...p, name: changes.name, phone: changes.phone };
+            }
+            return p;
+        });
+    }, [serverData, localChanges]);
+
+
 
     const createReservationMutation = useMutation({
         mutationFn: createReservation,
@@ -129,18 +141,27 @@ const AdminPage: NextPage = () => {
     });
 
     const deleteReservationMutation = useMutation({
-        mutationFn: deleteReservation,
-        onMutate: async (reservationId: number) => {
+        mutationFn: ({ reservationId }: { reservationId: number; index: number }) => deleteReservation(reservationId),
+        onMutate: async ({ reservationId, index }: { reservationId: number; index: number }) => {
             await queryClient.cancelQueries({ queryKey: reservationQueryKey });
             const previousParticipants = queryClient.getQueryData<Participant[]>(reservationQueryKey);
 
-            queryClient.setQueryData<Participant[]>(reservationQueryKey, (old ) =>
+            // 1. React Query 캐시를 낙관적으로 업데이트하여 UI 즉시 변경
+            queryClient.setQueryData<Participant[]>(reservationQueryKey, (old) =>
                 old?.map(p =>
                     p.reservationId === reservationId
                         ? { ...p, slotNo: 0, name: '', phone: '', reservationId: 0 }
                         : p
                 ) || []
             );
+
+            // 2. 해당 칸에 남아있을 수 있는 로컬 변경사항도 함께 제거
+            setLocalChanges(prev => {
+                const newChanges = { ...prev };
+                delete newChanges[index];
+                return newChanges;
+            });
+
             return { previousParticipants };
         },
         onError: (err, newTodo, context) => {
@@ -180,11 +201,16 @@ const AdminPage: NextPage = () => {
     };
 
     const handleParticipantChange = (index: number, field: 'name' | 'phone', value: string) => {
-        const newParticipants = [...participants];
-        if (newParticipants[index]) {
-            newParticipants[index] = { ...newParticipants[index], [field]: value };
-            setParticipants(newParticipants);
-        }
+        setLocalChanges(prev => {
+            const currentChanges = prev[index] || { name: '', phone: '' };
+            return {
+                ...prev,
+                [index]: {
+                    ...currentChanges,
+                    [field]: value,
+                }
+            };
+        });
     };
 
     const handleSave = (index: number) => {
@@ -215,7 +241,7 @@ const AdminPage: NextPage = () => {
         }
 
         if (window.confirm(`[${index + 1}]번 ${participantToDelete.name}님의 예약을 삭제하시겠습니까?`)) {
-            deleteReservationMutation.mutate(participantToDelete.reservationId);
+            deleteReservationMutation.mutate({ reservationId: participantToDelete.reservationId, index });
         }
     };
 
@@ -244,8 +270,8 @@ const AdminPage: NextPage = () => {
                                         <input type="text" placeholder="이름" className="input-name" value={p.name} onChange={(e) => handleParticipantChange(index, 'name', e.target.value)} disabled={!!p.reservationId} />
                                         <input type="text" placeholder="연락처" className="input-contact" value={p.phone} onChange={(e) => handleParticipantChange(index, 'phone', e.target.value)} disabled={!!p.reservationId} />
                                         {p.reservationId ? (
-                                            <button onClick={() => handleDelete(index)} className="delete-button" disabled={deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId}>
-                                                {deleteReservationMutation.isPending && deleteReservationMutation.variables === p.reservationId ? '삭제' : '삭제'}
+                                            <button onClick={() => handleDelete(index)} className="delete-button" disabled={deleteReservationMutation.isPending && deleteReservationMutation.variables?.reservationId === p.reservationId}>
+                                                {deleteReservationMutation.isPending && deleteReservationMutation.variables?.reservationId === p.reservationId ? '삭제중...' : '삭제'}
                                             </button>
                                         ) : (
                                             <button onClick={() => handleSave(index)} className="save-button" disabled={createReservationMutation.isPending && createReservationMutation.variables?.slotNo === (index + 1)}>

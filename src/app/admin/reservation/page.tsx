@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import type { NextPage } from "next";
 import { useQuery } from "@tanstack/react-query";
-import {reservationsResponse, Slot} from "@/app/type";
-import { DATES, MAX_PARTICIPANTS, TIMESLOTS } from "@/app/type";
+import { type reservationsResponse, type Slot} from "@/types/reservation";
+import { DATES, MAX_PARTICIPANTS, TIMESLOTS } from "@/constants/reservation";
 import {getReservations} from "@/lib/api/reservations";
 import {getReservationDetail} from "@/lib/api/reservationDetail";
 import {ApiResult} from "@/lib/api/types";
@@ -12,13 +12,11 @@ import {ApiResult} from "@/lib/api/types";
 const timeSlots = TIMESLOTS.map(t => t.replace(' (', '\n('));
 
 async function fetchReservations() {
-    try {
-        const res: ApiResult<reservationsResponse> = await getReservations();
-        if (!res.success || !res.data) throw new Error(res.error || 'fail');
-        return res.data;
-    } catch {
-        return null;
+    const res: ApiResult<reservationsResponse> = await getReservations();
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to fetch reservations.');
     }
+    return res.data;
 }
 
 async function fetchReservationDetail(
@@ -26,13 +24,11 @@ async function fetchReservationDetail(
     boothType: string,
     roundNo: number
 ) {
-    try {
-        const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
-        if (!res.success || !res.data) throw new Error(res.error || 'fail');
-        return res.data;
-    } catch {
-        return null;
+    const res: ApiResult<Slot[]> = await getReservationDetail(date, boothType, roundNo);
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to fetch reservation details.');
     }
+    return res.data;
 }
 
 const Home: NextPage = () => {

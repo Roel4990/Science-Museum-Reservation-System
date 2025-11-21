@@ -1,4 +1,4 @@
-import {reservationsResponse} from "@/app/type";
+import type { reservationsResponse } from "@/types/reservation";
 import {ApiResult, fail, ok} from "./types";
 
 export const getReservations = async (): Promise<ApiResult<reservationsResponse>> => {

@@ -3,20 +3,19 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import { useQuery } from "@tanstack/react-query";
-import {TIMESLOTS, DATES, MAX_PARTICIPANTS, reservationsResponse} from "@/app/type";
+import { TIMESLOTS, DATES, MAX_PARTICIPANTS } from "@/constants/reservation";
+import { type reservationsResponse } from "@/types/reservation";
 import {getReservations} from "@/lib/api/reservations";
 import {ApiResult} from "@/lib/api/types";
 
 const timeSlots = TIMESLOTS.map(t => t.replace(' (', '\n('));
 
 async function fetchReservations() {
-    try {
-        const res: ApiResult<reservationsResponse> = await getReservations();
-        if (!res.success || !res.data) throw new Error(res.error || 'fail');
-        return res.data;
-    } catch {
-        return null;
+    const res: ApiResult<reservationsResponse> = await getReservations();
+    if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to fetch reservations.');
     }
+    return res.data;
 }
 
 const Home: NextPage = () => {
