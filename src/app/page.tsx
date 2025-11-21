@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import { useQuery } from "@tanstack/react-query";
-import {TIMESLOTS, DATES, MAX_PARTICIPANTS, reservationsResponse} from "@/app/type";
+import { TIMESLOTS, DATES, MAX_PARTICIPANTS } from "@/constants/reservation";
+import { type reservationsResponse } from "@/types/reservation";
 import {getReservations} from "@/lib/api/reservations";
 import {ApiResult} from "@/lib/api/types";
 

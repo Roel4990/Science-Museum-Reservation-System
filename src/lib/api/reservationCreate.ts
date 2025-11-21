@@ -1,4 +1,4 @@
-import type {CreateReservationPayload, CreateReservationResult} from "@/app/type";
+import type {CreateReservationPayload, CreateReservationResult} from "@/types/reservation";
 import {ApiResult, fail, ok} from "./types";
 
 export const createReservation = async (payload: CreateReservationPayload): Promise<ApiResult<CreateReservationResult>> => {

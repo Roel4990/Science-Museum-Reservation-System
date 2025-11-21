@@ -3,11 +3,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { NextPage } from 'next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DATES, BOOTHS, TIMESLOTS, MAX_PARTICIPANTS } from '@/constants/reservation';
 import {
-    DATES, BOOTHS, TIMESLOTS, MAX_PARTICIPANTS, BoothType,
+    BoothType,
     type ReservationDate, type BoothName, type TimeSlot,
-    type Participant, type CreateReservationPayload, Slot
-} from '../type';
+    type Participant, type CreateReservationPayload, type Slot
+} from '@/types/reservation';
 import './admin.css';
 import { ApiResult } from "@/lib/api/types";
 import { getReservationDetail } from "@/lib/api/reservationDetail";
