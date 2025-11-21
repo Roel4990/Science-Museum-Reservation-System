@@ -45,12 +45,16 @@ const AdminPage: NextPage = () => {
     const [selectedBooth, setSelectedBooth] = useState<BoothName | null>(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
 
-    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [localChanges, setLocalChanges] = useState<Record<number, { name: string; phone: string }>>({});
 
     const reservationQueryKey = useMemo(() =>
         ['reservations', selectedDate, selectedBooth, selectedTimeSlot],
         [selectedDate, selectedBooth, selectedTimeSlot]
     );
+
+    useEffect(() => {
+        setLocalChanges({});
+    }, [reservationQueryKey]);
 
     const { data: serverData, isLoading: isParticipantsLoading } = useQuery({
         queryKey: reservationQueryKey,
@@ -83,9 +87,18 @@ const AdminPage: NextPage = () => {
         enabled: !!(selectedDate && selectedBooth && selectedTimeSlot),
     });
 
-    useEffect(() => {
-        setParticipants(serverData || []);
-    }, [serverData]);
+    const participants = useMemo(() => {
+        const baseData = serverData || Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
+        return baseData.map((p, index) => {
+            const changes = localChanges[index];
+            if (changes) {
+                return { ...p, name: changes.name, phone: changes.phone };
+            }
+            return p;
+        });
+    }, [serverData, localChanges]);
+
+
 
     const createReservationMutation = useMutation({
         mutationFn: createReservation,
@@ -181,11 +194,16 @@ const AdminPage: NextPage = () => {
     };
 
     const handleParticipantChange = (index: number, field: 'name' | 'phone', value: string) => {
-        const newParticipants = [...participants];
-        if (newParticipants[index]) {
-            newParticipants[index] = { ...newParticipants[index], [field]: value };
-            setParticipants(newParticipants);
-        }
+        setLocalChanges(prev => {
+            const currentChanges = prev[index] || { name: '', phone: '' };
+            return {
+                ...prev,
+                [index]: {
+                    ...currentChanges,
+                    [field]: value,
+                }
+            };
+        });
     };
 
     const handleSave = (index: number) => {
