@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import { useQuery } from "@tanstack/react-query";
-import { TIMESLOTS, DATES, MAX_PARTICIPANTS } from "@/constants/reservation";
-import { type reservationsResponse } from "@/types/reservation";
+import {TIMESLOTS, DATES, getMaxParticipants} from "@/constants/reservation";
+import {type ReservationDate, type reservationsResponse} from "@/types/reservation";
 import {getReservations} from "@/lib/api/reservations";
 import {ApiResult} from "@/lib/api/types";
 
@@ -19,7 +19,7 @@ async function fetchReservations() {
 }
 
 const Home: NextPage = () => {
-    const [selectedDate, setSelectedDate] = useState<string>(DATES[0]);
+    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[0]);
 
     const { data: reservations, isError, isLoading, isFetching, refetch } = useQuery({
         queryKey: ['reservations'],
@@ -71,7 +71,7 @@ const Home: NextPage = () => {
                     </p>
                 )}
                 <p className="w-full text-center text-gray-600 text-sm">
-                    각 칸은 남은 인원 수를 의미하며, {12 - MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
+                    각 칸은 예약 가능 인원 수를 의미하며, 0명이면 마감으로 표기됩니다.
                 </p>
             </header>
             <main>
@@ -90,14 +90,15 @@ const Home: NextPage = () => {
                                 <tr key={booth.boothType} className="border-b border-gray-200 last:border-b-0">
                                     <td className="p-4 font-medium text-gray-800">{booth.boothName}</td>
                                     {booth.rounds.map((round) => {
-                                        const isFull = round.count >= MAX_PARTICIPANTS;
+                                        const maxParticipants = getMaxParticipants(selectedDate);
+                                        const isFull = round.count >= maxParticipants;
                                         const hasReservations = round.count > 0;
                                         return (
                                             <td
                                                 key={round.roundNo}
                                                 className={`p-4 text-center font-semibold ${isFull ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"} ${hasReservations ? "cursor-pointer hover:bg-gray-200 transition-colors duration-200" : ""}`}
                                             >
-                                                {round.count < MAX_PARTICIPANTS ? `${MAX_PARTICIPANTS - round.count}자리` : "마감"}
+                                                {round.count < maxParticipants ? `${maxParticipants - round.count}자리` : "마감"}
                                             </td>
                                         );
                                     })}

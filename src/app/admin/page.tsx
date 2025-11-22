@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { NextPage } from 'next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DATES, BOOTHS, TIMESLOTS, MAX_PARTICIPANTS } from '@/constants/reservation';
+import {DATES, BOOTHS, TIMESLOTS, getMaxParticipants} from '@/constants/reservation';
 import {
     BoothType,
     type ReservationDate, type BoothName, type TimeSlot,
@@ -64,11 +64,12 @@ const AdminPage: NextPage = () => {
             const boothType = boothNameToType[selectedBooth];
             const fetchedData = await fetchReservationDetail(selectedDate, boothType, roundNo);
 
-            const initialSlots: Participant[] = Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
+            const maxParticipants = getMaxParticipants(selectedDate);
+            const initialSlots: Participant[] = Array.from({ length: maxParticipants }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
 
             if (fetchedData) {
                 fetchedData.forEach(slot => {
-                    if (slot.slotNo !== null && slot.slotNo >= 1 && slot.slotNo <= MAX_PARTICIPANTS) {
+                    if (slot.slotNo !== null && slot.slotNo >= 1 && slot.slotNo <= maxParticipants) {
                         const index = slot.slotNo - 1;
                         initialSlots[index] = {
                             ...initialSlots[index],
@@ -86,7 +87,9 @@ const AdminPage: NextPage = () => {
     });
 
     const participants = useMemo(() => {
-        const baseData = serverData || Array.from({ length: MAX_PARTICIPANTS }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
+        if (!selectedDate) return [];
+        const maxParticipants = getMaxParticipants(selectedDate);
+        const baseData = serverData || Array.from({ length: maxParticipants }, (_, i) => ({ slotNo: 0, name: '', phone: '', reservationId: 0 }));
         return baseData.map((p, index) => {
             const changes = localChanges[index];
             if (changes) {
@@ -94,7 +97,7 @@ const AdminPage: NextPage = () => {
             }
             return p;
         });
-    }, [serverData, localChanges]);
+    }, [serverData, localChanges, selectedDate]);
 
 
 

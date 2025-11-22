@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import type { NextPage } from "next";
 import { useQuery } from "@tanstack/react-query";
-import { type reservationsResponse, type Slot} from "@/types/reservation";
-import { DATES, MAX_PARTICIPANTS, TIMESLOTS } from "@/constants/reservation";
+import {type ReservationDate, type reservationsResponse, type Slot} from "@/types/reservation";
+import {DATES, getMaxParticipants, TIMESLOTS} from "@/constants/reservation";
 import {getReservations} from "@/lib/api/reservations";
 import {getReservationDetail} from "@/lib/api/reservationDetail";
 import {ApiResult} from "@/lib/api/types";
@@ -32,7 +32,7 @@ async function fetchReservationDetail(
 }
 
 const Home: NextPage = () => {
-    const [selectedDate, setSelectedDate] = useState<string>(DATES[0]);
+    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[0]);
     const [modalData, setModalData] = useState<{ boothName: string; time: string; slots: Slot[] } | null>(null);
     const [detailParams, setDetailParams] = useState<{ date: string; boothType: string; roundNo: number; boothName: string; time: string; } | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -127,7 +127,7 @@ const Home: NextPage = () => {
                     </p>
                 )}
                 <p className="w-full text-center text-gray-600 text-sm">
-                    각 칸은 예약된 인원 수를 의미하며, {MAX_PARTICIPANTS}명이면 마감으로 표기됩니다.
+                    각 칸은 예약된 인원 수를 의미하며, {selectedDate ? getMaxParticipants(selectedDate) : ''}명이면 마감으로 표기됩니다.
                 </p>
             </header>
             <main>
@@ -146,7 +146,8 @@ const Home: NextPage = () => {
                             <tr key={booth.boothType} className="border-b border-gray-200 last:border-b-0">
                                 <td className="p-4 font-medium text-gray-800">{booth.boothName}</td>
                                 {booth.rounds.map((round) => {
-                                    const isFull = round.count >= MAX_PARTICIPANTS;
+                                    const maxParticipants = getMaxParticipants(selectedDate);
+                                    const isFull = round.count >= maxParticipants;
                                     const hasReservations = round.count > 0;
                                     return (
                                         <td
