@@ -19,7 +19,7 @@ async function fetchReservations() {
 }
 
 const Home: NextPage = () => {
-    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[0]);
+    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[1]);
 
     const { data: reservations, isError, isLoading, isFetching, refetch } = useQuery({
         queryKey: ['reservations'],

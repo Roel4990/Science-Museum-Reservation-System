@@ -32,7 +32,7 @@ async function fetchReservationDetail(
 }
 
 const Home: NextPage = () => {
-    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[0]);
+    const [selectedDate, setSelectedDate] = useState<ReservationDate>(DATES[1]);
     const [modalData, setModalData] = useState<{ boothName: string; time: string; slots: Slot[] } | null>(null);
     const [detailParams, setDetailParams] = useState<{ date: string; boothType: string; roundNo: number; boothName: string; time: string; } | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
